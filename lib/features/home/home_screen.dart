@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../shared/widgets/movie_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -9,16 +10,13 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(20),
-
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 // App Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -31,7 +29,6 @@ class HomeScreen extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     IconButton(
                       onPressed: () {},
                       icon: const Icon(
@@ -74,11 +71,8 @@ class HomeScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: AppColors.border,
-                    ),
+                    border: Border.all(color: AppColors.border),
                   ),
-
                   child: const Center(
                     child: Text(
                       'Featured Movies Coming Soon',
@@ -105,11 +99,36 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 15),
 
-                const Text(
-                  'Your trending movie collection will appear here.',
-                  style: TextStyle(
-                    color: AppColors.secondaryText,
-                    fontSize: 14,
+                // Trending Movie Cards
+                SizedBox(
+                  height: 270,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: const [
+                      MovieCard(
+                        title: 'RRR',
+                        year: '2022',
+                        rating: 8.0,
+                      ),
+                      SizedBox(width: 15),
+                      MovieCard(
+                        title: 'Baahubali 2',
+                        year: '2017',
+                        rating: 8.2,
+                      ),
+                      SizedBox(width: 15),
+                      MovieCard(
+                        title: 'Salaar',
+                        year: '2023',
+                        rating: 6.6,
+                      ),
+                      SizedBox(width: 15),
+                      MovieCard(
+                        title: 'Devara',
+                        year: '2024',
+                        rating: 6.0,
+                      ),
+                    ],
                   ),
                 ),
 
