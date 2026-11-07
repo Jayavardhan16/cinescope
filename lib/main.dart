@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'core/theme/app_theme.dart';
 import 'features/home/home_screen.dart';
+import 'shared/providers/watchlist_provider.dart';
 
 void main() {
-  runApp(const CineScopeApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => WatchlistProvider()..loadWatchlist(),
+      child: const CineScopeApp(),
+    ),
+  );
 }
 
 class CineScopeApp extends StatelessWidget {

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -40,9 +39,7 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
-        hintStyle: const TextStyle(
-          color: AppColors.secondaryText,
-        ),
+        hintStyle: const TextStyle(color: AppColors.secondaryText),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -51,4 +48,3 @@ class AppTheme {
     );
   }
 }
-
