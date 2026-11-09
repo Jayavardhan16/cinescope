@@ -393,7 +393,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     width: double.infinity,
                     child: poster != null
                         ? CachedNetworkImage(
-                            imageUrl: 'https://image.tmdb.org/t/p/w500$poster',
+                            imageUrl: 'https://image.tmdb.org/t/p/w342$poster',
                             fit: BoxFit.cover,
                             placeholder: (_, url) => const Center(
                               child: CircularProgressIndicator(

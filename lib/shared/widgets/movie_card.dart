@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -24,6 +25,16 @@ class _MovieCardState extends State<MovieCard> {
   bool isHovered = false;
   Future<Map<String, dynamic>>? creditsFuture;
 
+  @override
+  void didUpdateWidget(covariant MovieCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.movie['id'] != widget.movie['id']) {
+      creditsFuture = null;
+      isHovered = false;
+    }
+  }
+
   void handleHover(bool hovering) {
     if (hovering && creditsFuture == null) {
       final id = widget.movie['id'];
@@ -42,17 +53,19 @@ class _MovieCardState extends State<MovieCard> {
   Widget build(BuildContext context) {
     final movie = widget.movie;
 
-    final title = movie['title'] ?? 'Unknown Movie';
-    final posterPath = movie['poster_path'];
+    final title = movie['title']?.toString() ?? 'Unknown Movie';
+    final posterPath = movie['poster_path']?.toString();
     final releaseDate = (movie['release_date'] ?? '').toString();
 
-    final year = releaseDate.isEmpty ? 'N/A' : releaseDate.split('-').first;
+    final year = releaseDate.isEmpty
+        ? 'N/A'
+        : releaseDate.split('-').first;
 
     final rating = (movie['vote_average'] as num?)?.toDouble() ?? 0.0;
 
     final screenWidth = MediaQuery.sizeOf(context).width;
 
-    final normalWidth = 170.0;
+    const normalWidth = 170.0;
     final expandedWidth = screenWidth < 600 ? 230.0 : 260.0;
 
     return MouseRegion(
@@ -93,16 +106,19 @@ class _MovieCardState extends State<MovieCard> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Movie poster.
-              if (posterPath != null && posterPath.toString().isNotEmpty)
+              // Optimized movie poster.
+              if (posterPath != null && posterPath.isNotEmpty)
                 CachedNetworkImage(
-                  imageUrl: 'https://image.tmdb.org/t/p/w500$posterPath',
+                  imageUrl: 'https://image.tmdb.org/t/p/w342$posterPath',
                   fit: BoxFit.cover,
-                  fadeInDuration: const Duration(milliseconds: 300),
-                  placeholder: (context, url) => const Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.gold,
-                      strokeWidth: 2,
+                  fadeInDuration: const Duration(milliseconds: 250),
+                  placeholder: (context, url) => Container(
+                    color: AppColors.surface,
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.gold,
+                        strokeWidth: 2,
+                      ),
                     ),
                   ),
                   errorWidget: (context, url, error) => const Center(
@@ -202,7 +218,6 @@ class _MovieCardState extends State<MovieCard> {
                       final credits = snapshot.data ?? {};
 
                       final crew = (credits['crew'] as List?) ?? [];
-
                       final cast = (credits['cast'] as List?) ?? [];
 
                       Map<String, dynamic>? director;
@@ -217,6 +232,7 @@ class _MovieCardState extends State<MovieCard> {
 
                       final actors = cast
                           .take(3)
+                          .whereType<Map>()
                           .map((person) => person['name'] ?? '')
                           .where((name) => name.toString().isNotEmpty)
                           .join(', ');
@@ -237,7 +253,6 @@ class _MovieCardState extends State<MovieCard> {
                             ),
                           ),
                           const SizedBox(height: 8),
-
                           Row(
                             children: [
                               const Icon(
@@ -269,9 +284,7 @@ class _MovieCardState extends State<MovieCard> {
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 12),
-
                           if (snapshot.connectionState ==
                               ConnectionState.waiting)
                             const LinearProgressIndicator(
@@ -328,9 +341,7 @@ class _MovieCardState extends State<MovieCard> {
                               ),
                             ),
                           ],
-
                           const SizedBox(height: 12),
-
                           const Row(
                             children: [
                               Icon(

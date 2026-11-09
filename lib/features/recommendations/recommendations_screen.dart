@@ -189,7 +189,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                     width: double.infinity,
                     child: poster != null
                         ? CachedNetworkImage(
-                            imageUrl: 'https://image.tmdb.org/t/p/w500$poster',
+                            imageUrl: 'https://image.tmdb.org/t/p/w342$poster',
                             fit: BoxFit.cover,
                             errorWidget: (_, url, error) => const Icon(
                               Icons.movie,

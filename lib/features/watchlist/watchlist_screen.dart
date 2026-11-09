@@ -142,7 +142,7 @@ class WatchlistScreen extends StatelessWidget {
                                           poster.toString().isNotEmpty
                                       ? CachedNetworkImage(
                                           imageUrl:
-                                              'https://image.tmdb.org/t/p/w500$poster',
+                                              'https://image.tmdb.org/t/p/w342$poster',
                                           fit: BoxFit.cover,
                                           errorWidget: (_, url, error) =>
                                               const Icon(

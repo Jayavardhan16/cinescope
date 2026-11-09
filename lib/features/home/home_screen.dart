@@ -1,4 +1,6 @@
+
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/services/tmdb_service.dart';
@@ -35,6 +37,10 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
+    _loadHomeData();
+  }
+
+  void _loadHomeData() {
     trendingMovies = tmdbService.getTrendingMovies();
 
     teluguMovies = tmdbService.getMoviesByLanguage('te');
@@ -50,6 +56,12 @@ class _HomeScreenState extends State<HomeScreen> {
     thrillerMovies = tmdbService.getMoviesByGenre(53);
   }
 
+  void _retryTrending() {
+    setState(() {
+      trendingMovies = tmdbService.getTrendingMovies();
+    });
+  }
+
   void openMovie(Map<String, dynamic> movie) {
     Navigator.push(
       context,
@@ -63,7 +75,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void openSearch() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => SearchScreen(tmdbService: tmdbService)),
+      MaterialPageRoute(
+        builder: (_) => SearchScreen(tmdbService: tmdbService),
+      ),
     );
   }
 
@@ -80,7 +94,8 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => RecommendationsScreen(tmdbService: tmdbService),
+        builder: (_) =>
+            RecommendationsScreen(tmdbService: tmdbService),
       ),
     );
   }
@@ -94,38 +109,93 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _loadingPlaceholder() {
+    return Container(
+      height: 280,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: const Center(
+        child: CircularProgressIndicator(color: AppColors.gold),
+      ),
+    );
+  }
+
+  Widget _errorPlaceholder({
+    required String message,
+    required VoidCallback onRetry,
+    double height = 280,
+  }) {
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.cloud_off_outlined,
+                color: AppColors.secondaryText,
+                size: 32,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh, size: 17),
+                label: const Text('Try Again'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.gold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget buildFeaturedMovie() {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: trendingMovies,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Container(
-            height: 280,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Center(
-              child: CircularProgressIndicator(color: AppColors.gold),
-            ),
-          );
+          return _loadingPlaceholder();
         }
 
         if (snapshot.hasError ||
             snapshot.data == null ||
             snapshot.data!.isEmpty) {
-          return const SizedBox.shrink();
+          return _errorPlaceholder(
+            message: 'Unable to load the featured movie.',
+            onRetry: _retryTrending,
+          );
         }
 
         final movie = snapshot.data!.first;
 
-        final backdropPath = movie['backdrop_path'];
-        final imageUrl = backdropPath != null
-            ? 'https://image.tmdb.org/t/p/w1280$backdropPath'
+        final backdropPath = movie['backdrop_path']?.toString();
+        final imageUrl = backdropPath != null && backdropPath.isNotEmpty
+            ? 'https://image.tmdb.org/t/p/w780$backdropPath'
             : null;
 
-        final title = movie['title'] ?? 'Featured Movie';
-        final overview = movie['overview'] ?? '';
+        final title = movie['title']?.toString() ?? 'Featured Movie';
+        final overview = movie['overview']?.toString() ?? '';
         final rating = movie['vote_average'];
 
         return GestureDetector(
@@ -133,107 +203,132 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Container(
             height: 280,
             width: double.infinity,
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: AppColors.border),
-              image: imageUrl != null
-                  ? DecorationImage(
-                      image: NetworkImage(imageUrl),
-                      fit: BoxFit.cover,
-                      onError: (_, stackTrace) {},
-                    )
-                  : null,
             ),
-            child: Container(
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                gradient: const LinearGradient(
-                  begin: Alignment.centerRight,
-                  end: Alignment.centerLeft,
-                  colors: [
-                    Colors.transparent,
-                    Color(0xDD0B0B0F),
-                    Color(0xFF0B0B0F),
-                  ],
-                  stops: [0.0, 0.55, 1.0],
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (imageUrl != null)
+                  CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.cover,
+                    fadeInDuration: const Duration(milliseconds: 250),
+                    placeholder: (context, url) => Container(
+                      color: AppColors.surface,
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.gold,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: const Text(
-                      'FEATURED MOVIE',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
+                    errorWidget: (context, url, error) => Container(
+                      color: AppColors.surface,
+                      child: const Icon(
+                        Icons.movie_outlined,
+                        color: AppColors.secondaryText,
+                        size: 55,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.primaryText,
-                      fontSize: 25,
-                      fontWeight: FontWeight.bold,
+                  )
+                else
+                  Container(color: AppColors.surface),
+
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerRight,
+                      end: Alignment.centerLeft,
+                      colors: [
+                        Colors.transparent,
+                        Color(0xDD0B0B0F),
+                        Color(0xFF0B0B0F),
+                      ],
+                      stops: [0.0, 0.55, 1.0],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  if (rating != null)
-                    Row(
-                      children: [
-                        const Icon(Icons.star, color: AppColors.gold, size: 18),
-                        const SizedBox(width: 5),
-                        Text(
-                          '${(rating as num).toStringAsFixed(1)} / 10',
-                          style: const TextStyle(
-                            color: AppColors.primaryText,
-                            fontSize: 13,
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.all(22),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const Text(
+                          'FEATURED MOVIE',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
                           ),
                         ),
-                      ],
-                    ),
-                  const SizedBox(height: 8),
-                  Text(
-                    overview.isEmpty
-                        ? 'Discover this movie on CineScope.'
-                        : overview,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.secondaryText,
-                      fontSize: 12,
-                      height: 1.5,
-                    ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.primaryText,
+                          fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (rating is num)
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              color: AppColors.gold,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              '${rating.toStringAsFixed(1)} / 10',
+                              style: const TextStyle(
+                                color: AppColors.primaryText,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      const SizedBox(height: 8),
+                      Text(
+                        overview.isEmpty
+                            ? 'Discover this movie on CineScope.'
+                            : overview,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.secondaryText,
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      ElevatedButton.icon(
+                        onPressed: () => openMovie(movie),
+                        icon: const Icon(Icons.play_arrow),
+                        label: const Text('View Details'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.gold,
+                          foregroundColor: Colors.black,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 14),
-                  ElevatedButton.icon(
-                    onPressed: () => openMovie(movie),
-                    icon: const Icon(Icons.play_arrow),
-                    label: const Text('View Details'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.gold,
-                      foregroundColor: Colors.black,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );
@@ -244,6 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget buildMovieSection(
     String title,
     Future<List<Map<String, dynamic>>> moviesFuture,
+    VoidCallback onRetry,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,15 +360,36 @@ class _HomeScreenState extends State<HomeScreen> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(
-                  child: CircularProgressIndicator(color: AppColors.gold),
+                  child: CircularProgressIndicator(
+                    color: AppColors.gold,
+                  ),
                 );
               }
 
               if (snapshot.hasError) {
-                return const Center(
-                  child: Text(
-                    'Unable to load movies.',
-                    style: TextStyle(color: AppColors.error),
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.cloud_off_outlined,
+                        color: AppColors.secondaryText,
+                        size: 28,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Unable to load movies.',
+                        style: TextStyle(color: AppColors.error),
+                      ),
+                      TextButton.icon(
+                        onPressed: onRetry,
+                        icon: const Icon(Icons.refresh, size: 16),
+                        label: const Text('Retry'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.gold,
+                        ),
+                      ),
+                    ],
                   ),
                 );
               }
@@ -283,7 +400,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 return const Center(
                   child: Text(
                     'No movies found.',
-                    style: TextStyle(color: AppColors.secondaryText),
+                    style: TextStyle(
+                      color: AppColors.secondaryText,
+                    ),
                   ),
                 );
               }
@@ -292,7 +411,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 scrollDirection: Axis.horizontal,
                 clipBehavior: Clip.none,
                 itemCount: movies.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 15),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(width: 15),
                 itemBuilder: (context, index) {
                   final movie = movies[index];
 
@@ -423,7 +543,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 22),
-
                 Row(
                   children: [
                     buildDiscoveryButton(
@@ -441,14 +560,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 30),
 
-                // Featured movie from TMDB trending movies.
                 buildFeaturedMovie(),
 
                 const SizedBox(height: 35),
-                buildMovieSection('Trending Now', trendingMovies),
+                buildMovieSection(
+                  'Trending Now',
+                  trendingMovies,
+                  _retryTrending,
+                ),
                 const Text(
                   'Explore by Genre',
                   style: TextStyle(
@@ -458,11 +579,41 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 25),
-                buildMovieSection('Action', actionMovies),
-                buildMovieSection('Comedy', comedyMovies),
-                buildMovieSection('Romance', romanceMovies),
-                buildMovieSection('Horror', horrorMovies),
-                buildMovieSection('Thriller', thrillerMovies),
+                buildMovieSection(
+                  'Action',
+                  actionMovies,
+                  () => setState(() {
+                    actionMovies = tmdbService.getMoviesByGenre(28);
+                  }),
+                ),
+                buildMovieSection(
+                  'Comedy',
+                  comedyMovies,
+                  () => setState(() {
+                    comedyMovies = tmdbService.getMoviesByGenre(35);
+                  }),
+                ),
+                buildMovieSection(
+                  'Romance',
+                  romanceMovies,
+                  () => setState(() {
+                    romanceMovies = tmdbService.getMoviesByGenre(10749);
+                  }),
+                ),
+                buildMovieSection(
+                  'Horror',
+                  horrorMovies,
+                  () => setState(() {
+                    horrorMovies = tmdbService.getMoviesByGenre(27);
+                  }),
+                ),
+                buildMovieSection(
+                  'Thriller',
+                  thrillerMovies,
+                  () => setState(() {
+                    thrillerMovies = tmdbService.getMoviesByGenre(53);
+                  }),
+                ),
                 const Text(
                   'Indian Cinema',
                   style: TextStyle(
@@ -480,11 +631,41 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 25),
-                buildMovieSection('Tollywood', teluguMovies),
-                buildMovieSection('Bollywood', hindiMovies),
-                buildMovieSection('Kollywood', tamilMovies),
-                buildMovieSection('Mollywood', malayalamMovies),
-                buildMovieSection('Sandalwood', kannadaMovies),
+                buildMovieSection(
+                  'Tollywood',
+                  teluguMovies,
+                  () => setState(() {
+                    teluguMovies = tmdbService.getMoviesByLanguage('te');
+                  }),
+                ),
+                buildMovieSection(
+                  'Bollywood',
+                  hindiMovies,
+                  () => setState(() {
+                    hindiMovies = tmdbService.getMoviesByLanguage('hi');
+                  }),
+                ),
+                buildMovieSection(
+                  'Kollywood',
+                  tamilMovies,
+                  () => setState(() {
+                    tamilMovies = tmdbService.getMoviesByLanguage('ta');
+                  }),
+                ),
+                buildMovieSection(
+                  'Mollywood',
+                  malayalamMovies,
+                  () => setState(() {
+                    malayalamMovies = tmdbService.getMoviesByLanguage('ml');
+                  }),
+                ),
+                buildMovieSection(
+                  'Sandalwood',
+                  kannadaMovies,
+                  () => setState(() {
+                    kannadaMovies = tmdbService.getMoviesByLanguage('kn');
+                  }),
+                ),
               ],
             ),
           ),

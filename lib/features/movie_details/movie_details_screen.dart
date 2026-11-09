@@ -176,7 +176,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                       child: poster != null
                           ? CachedNetworkImage(
                               imageUrl:
-                                  'https://image.tmdb.org/t/p/w342$poster',
+                                  'https://image.tmdb.org/t/p/w185$poster',
                               width: 125,
                               fit: BoxFit.cover,
                             )
@@ -281,7 +281,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                       children: [
                         CachedNetworkImage(
                           imageUrl:
-                              'https://image.tmdb.org/t/p/w1280$backdropPath',
+                              'https://image.tmdb.org/t/p/w780$backdropPath',
                           fit: BoxFit.cover,
                         ),
                         const DecoratedBox(
@@ -313,7 +313,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                               borderRadius: BorderRadius.circular(12),
                               child: CachedNetworkImage(
                                 imageUrl:
-                                    'https://image.tmdb.org/t/p/w342$posterPath',
+                                    'https://image.tmdb.org/t/p/w185$posterPath',
                                 width: 125,
                                 height: 185,
                                 fit: BoxFit.cover,
